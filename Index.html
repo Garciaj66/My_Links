@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Enlaces</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; }
+        h1 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        ul { list-style: none; padding: 0; }
+        li { margin: 15px 0; background: #f9f9f9; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        a { text-decoration: none; color: #007bff; font-weight: bold; font-size: 1.1em; }
+        a:hover { text-decoration: underline; }
+        .destination { display: block; color: #666; font-size: 0.85em; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Directorio de Enlaces</h1>
+    <div id="lista">Cargando enlaces...</div>
+
+    <!-- CAMBIO AQUÍ: Importamos ID_Mapping.js -->
+    <script src="ID_Mapping.js"></script>
+
+    <script>
+        const contenedor = document.getElementById('lista');
+        const ul = document.createElement('ul');
+
+        // Verificamos si el archivo se cargó correctamente
+        if (typeof redirects === 'undefined') {
+            contenedor.innerHTML = '<p style="color:red">Error: No se pudo cargar ID_Mapping.js</p>';
+        } else {
+            for (const [key, url] of Object.entries(redirects)) {
+                const li = document.createElement('li');
+                
+                // Lógica para detectar la ruta base (ej: /My_Links/)
+                const currentPath = window.location.pathname.replace('/index.html', '');
+                const cleanPath = currentPath.endsWith('/') ? currentPath : currentPath + '/';
+                
+                li.innerHTML = `
+                    <a href="${cleanPath}${key}">${key}</a>
+                    <span class="destination">→ ${url}</span>
+                `;
+                ul.appendChild(li);
+            }
+            contenedor.innerHTML = '';
+            contenedor.appendChild(ul);
+        }
+    </script>
+</body>
+</html>

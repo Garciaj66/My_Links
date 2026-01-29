@@ -18,8 +18,8 @@
     <h1>Directorio de Enlaces</h1>
     <div id="lista">Cargando enlaces...</div>
 
-    <!-- CAMBIO AQUÍ: Importamos ID_Mapping.js -->
-    <script src="ID_Mapping.js"></script>
+    <!-- CAMBIO AQUÍ: Importamos id_mapping.js -->
+    <script src="id_mapping.js"></script>
 
     <script>
         const contenedor = document.getElementById('lista');
@@ -27,7 +27,7 @@
 
         // Verificamos si el archivo se cargó correctamente
         if (typeof redirects === 'undefined') {
-            contenedor.innerHTML = '<p style="color:red">Error: No se pudo cargar ID_Mapping.js</p>';
+            contenedor.innerHTML = '<p style="color:red">Error: No se pudo cargar id_mapping.js</p>';
         } else {
             for (const [key, url] of Object.entries(redirects)) {
                 const li = document.createElement('li');

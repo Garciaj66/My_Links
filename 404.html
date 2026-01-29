@@ -4,62 +4,105 @@
     <meta charset="UTF-8">
     <title>Redirigiendo...</title>
     
+    <!-- 1. SCRIPT DE GOOGLE ANALYTICS (GA4) -->
+    <!-- Cargamos la librería oficial con tu ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JBTPT0D1C7"></script>
     <script>
-        // --- MOTOR DE REDIRECCIÓN ROBUSTO ---
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
-        // 1. Detectar el nombre del repositorio automáticamente desde la URL
-        // Ej: de "/My_Links/ID1" extrae "My_Links"
-        const repoName = window.location.pathname.split('/')[1];
-
-        // 2. Construir la ruta completa y dinámica al script de mapeo
-        const scriptUrl = `/${repoName}/id_mapping.js`;
-
-        // 3. Función para manejar la redirección
+      // Configuración con tu ID real
+      gtag('config', 'G-JBTPT0D1C7');
+    </script>
+    
+    <!-- 2. SCRIPT DE REDIRECCIÓN Y RASTREO -->
+    <script>
+        // Función principal
         function handleRedirect() {
-            // Obtener el ID de la URL (el último segmento)
-            const segments = window.location.pathname.split('/').filter(part => part.length > 0);
-            const id = segments[segments.length - 1];
+            // Detectar nombre del repositorio para buscar el archivo de mapeo
+            // Ej: de "/My_Links/ID1" extrae "My_Links"
+            // Si usas dominio personalizado, esto podría necesitar ajuste, pero para github.io funciona así.
+            const pathSegments = window.location.pathname.split('/').filter(part => part.length > 0);
+            
+            // Asumimos que el primer segmento es el repo si no estamos en la raíz absoluta
+            // Si tu URL es garciaj66.github.io/My_Links/ID1 -> repoName es My_Links
+            let repoName = pathSegments[0]; 
+            
+            // Construir ruta al script de datos
+            // Nota: Si esto falla, asegúrate de que el nombre del repo en la URL coincida
+            const scriptUrl = `/${repoName}/id_mapping.js`;
 
-            // Verificar si el objeto 'redirects' existe y si contiene el ID
-            if (typeof redirects !== 'undefined' && redirects[id]) {
-                document.title = "Redirigiendo a " + id;
-                window.location.replace(redirects[id]);
-            } else {
-                // Manejo de error si el ID no se encuentra
+            // Cargar el script de mapeo dinámicamente
+            const script = document.createElement('script');
+            script.src = scriptUrl;
+            
+            // Cuando el script se cargue, ejecutamos la lógica
+            script.onload = () => {
+                // El ID es el último segmento de la URL
+                const id = pathSegments[pathSegments.length - 1];
+
+                if (typeof redirects !== 'undefined' && redirects[id]) {
+                    const destinationUrl = redirects[id];
+                    
+                    // --- LÓGICA DE RASTREO ---
+                    let redirectExecuted = false;
+
+                    // Función que ejecuta la redirección real
+                    function performRedirect() {
+                        if (!redirectExecuted) {
+                            redirectExecuted = true;
+                            window.location.replace(destinationUrl);
+                        }
+                    }
+
+                    // Enviar evento a Google Analytics
+                    gtag('event', 'redirect_click', {
+                        'event_category': 'URL Redirection',
+                        'event_label': id,             // Esto es lo que verás en los reportes (ej: "ID1")
+                        'redirect_url': destinationUrl,
+                        'event_callback': performRedirect, // Intenta redirigir al terminar de enviar
+                        'transport_type': 'beacon'
+                    });
+
+                    // Fallback de seguridad:
+                    // Si Google Analytics tarda más de 0.8 segundos o falla (bloqueadores de anuncios),
+                    // forzamos la redirección para no dejar al usuario esperando.
+                    setTimeout(performRedirect, 800);
+
+                } else {
+                    // ID NO ENCONTRADO
+                    document.body.innerHTML = `
+                        <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+                            <h1>⚠️ Enlace no encontrado</h1>
+                            <p>El ID <strong>"${id}"</strong> no existe en la base de datos.</p>
+                            <a href="/${repoName}/">Volver al inicio</a>
+                        </div>
+                    `;
+                }
+            };
+            
+            // Error al cargar id_mapping.js
+            script.onerror = () => {
                 document.body.innerHTML = `
                     <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
-                        <h1>⚠️ Enlace no encontrado</h1>
-                        <p>El ID <strong>"${id}"</strong> no existe en la base de datos.</p>
-                        <a href="/${repoName}/">Volver al inicio</a>
+                        <h1>❌ Error de Configuración</h1>
+                        <p>No se pudo cargar el archivo de datos desde: <code>${scriptUrl}</code></p>
+                        <p>Verifica que el archivo <em>id_mapping.js</em> exista en tu repositorio.</p>
                     </div>
                 `;
-            }
+            };
+            
+            document.head.appendChild(script);
         }
 
-        // 4. Cargar el script dinámicamente y ejecutar la redirección
-        const script = document.createElement('script');
-        script.src = scriptUrl;
-        
-        // Cuando el script se cargue correctamente, ejecuta la lógica
-        script.onload = handleRedirect;
-        
-        // Si el script no se puede cargar (error 404 en el script), muestra un error
-        script.onerror = function() {
-            document.body.innerHTML = `
-                <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
-                    <h1>❌ Error de Configuración</h1>
-                    <p>No se pudo cargar el archivo de mapeo desde la ruta:</p>
-                    <p><code>${scriptUrl}</code></p>
-                    <p>Verifica que el nombre del repositorio y del archivo sean correctos.</p>
-                </div>
-            `;
-        };
-        
-        // Añadir el script al documento para que se cargue
-        document.head.appendChild(script);
+        // Iniciar
+        handleRedirect();
     </script>
 </head>
 <body>
-    <p style="font-family: sans-serif; text-align: center; margin-top: 50px;">Buscando destino...</p>
+    <p style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #666;">
+        Procesando redirección...
+    </p>
 </body>
 </html>

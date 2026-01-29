@@ -4,36 +4,62 @@
     <meta charset="UTF-8">
     <title>Redirigiendo...</title>
     
-    <!-- Ruta absoluta al archivo de datos. Ajusta 'My_Links' si tu repo cambia de nombre -->
-    <script src="/My_Links/id_mapping.js"></script>
-    
     <script>
-        // 1. Obtener la ruta actual
-        const path = window.location.pathname;
-        
-        // 2. Limpiar la ruta para obtener solo el ID final
-        // Divide por "/" y elimina espacios vacíos para evitar errores con barras dobles
-        const segments = path.split('/').filter(part => part.length > 0);
-        
-        // El ID es el último segmento de la URL
-        const id = segments[segments.length - 1];
+        // --- MOTOR DE REDIRECCIÓN ROBUSTO ---
 
-        // 3. Verificar y Redirigir
-        if (typeof redirects !== 'undefined' && redirects[id]) {
-            document.title = "Redirigiendo a " + id;
-            window.location.replace(redirects[id]);
-        } else {
-            // 4. Manejo de error: ID no encontrado
-            document.write(`
-                <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
-                    <h1>⚠️ Enlace no encontrado</h1>
-                    <p>El ID <strong>"${id}"</strong> no existe en la base de datos.</p>
-                    <a href="/My_Links/">Volver al inicio</a>
-                </div>
-            `);
+        // 1. Detectar el nombre del repositorio automáticamente desde la URL
+        // Ej: de "/My_Links/ID1" extrae "My_Links"
+        const repoName = window.location.pathname.split('/')[1];
+
+        // 2. Construir la ruta completa y dinámica al script de mapeo
+        const scriptUrl = `/${repoName}/id_mapping.js`;
+
+        // 3. Función para manejar la redirección
+        function handleRedirect() {
+            // Obtener el ID de la URL (el último segmento)
+            const segments = window.location.pathname.split('/').filter(part => part.length > 0);
+            const id = segments[segments.length - 1];
+
+            // Verificar si el objeto 'redirects' existe y si contiene el ID
+            if (typeof redirects !== 'undefined' && redirects[id]) {
+                document.title = "Redirigiendo a " + id;
+                window.location.replace(redirects[id]);
+            } else {
+                // Manejo de error si el ID no se encuentra
+                document.body.innerHTML = `
+                    <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+                        <h1>⚠️ Enlace no encontrado</h1>
+                        <p>El ID <strong>"${id}"</strong> no existe en la base de datos.</p>
+                        <a href="/${repoName}/">Volver al inicio</a>
+                    </div>
+                `;
+            }
         }
+
+        // 4. Cargar el script dinámicamente y ejecutar la redirección
+        const script = document.createElement('script');
+        script.src = scriptUrl;
+        
+        // Cuando el script se cargue correctamente, ejecuta la lógica
+        script.onload = handleRedirect;
+        
+        // Si el script no se puede cargar (error 404 en el script), muestra un error
+        script.onerror = function() {
+            document.body.innerHTML = `
+                <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+                    <h1>❌ Error de Configuración</h1>
+                    <p>No se pudo cargar el archivo de mapeo desde la ruta:</p>
+                    <p><code>${scriptUrl}</code></p>
+                    <p>Verifica que el nombre del repositorio y del archivo sean correctos.</p>
+                </div>
+            `;
+        };
+        
+        // Añadir el script al documento para que se cargue
+        document.head.appendChild(script);
     </script>
 </head>
 <body>
+    <p style="font-family: sans-serif; text-align: center; margin-top: 50px;">Buscando destino...</p>
 </body>
 </html>
